@@ -24,6 +24,7 @@ extern float targetingFarRange;
 
 // Return true when found a target
 bool targetNearestEnemy(float distanceLimit);
+bool targetFarthestInCombatEnemy(float distanceLimit);
 bool targetEnemyWithMostHP(float distanceLimit);
 bool targetWorldBoss(float distanceLimit);
 bool targetEnemyConsideringDistance(MOB_SELECTFUNCTION selectFunction);
