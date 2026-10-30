@@ -155,6 +155,14 @@ int __fastcall detoured_UnitXP(void* L) {
         }
         else if (cmd == "target") {
             string subcmd{ lua_tostring(L, 2) };
+            if (subcmd == "farthestInCombat35") {
+                lua_pushboolean(L, targetFarthestInCombatEnemy(35.0f));
+                return 1;
+            }
+            if (subcmd == "farthestInCombat41") {
+                lua_pushboolean(L, targetFarthestInCombatEnemy(41.0f));
+                return 1;
+            }
             if (subcmd == "nearestEnemy") {
                 lua_pushboolean(L, targetNearestEnemy(FLT_MAX));
                 return 1;
