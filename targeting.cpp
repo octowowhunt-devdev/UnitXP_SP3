@@ -13,6 +13,63 @@ float targetingRangeCone = 2.2f;
 bool targetingInCombatFilter = true;
 float targetingFarRange = 41.0f;
 
+// Pick the farthest visible NPC that is already fighting, only while the player is in combat.
+// Keep current target unchanged when no suitable NPC is found.
+bool targetFarthestInCombatEnemy(float distanceLimit) {
+    uint32_t player = vanilla1121_getVisiableObject(vanilla1121_unitGUID("player"));
+    if (player == 0 || !vanilla1121_unitInCombat(player)) {
+        return false;
+    }
+
+    uint32_t objects = *reinterpret_cast<uint32_t*>(0xb41414);
+    if (objects == 0) {
+        return false;
+    }
+
+    uint32_t i = *reinterpret_cast<uint32_t*>(objects + 0xac);
+    uint64_t farthestGUID = 0;
+    float farthestDistance = -1.0f;
+
+    while (i != 0 && (i & 1) == 0) {
+        // Ignore players, pets and unrelated object types.
+        if (vanilla1121_objectType(i) == OBJECT_TYPE_Unit
+            && vanilla1121_unitIsControlledByPlayer(i) == 0
+            && vanilla1121_unitCanBeAttacked(i) == 1
+            && vanilla1121_unitIsDead(i) == 0
+            && vanilla1121_unitInCombat(i)) {
+
+            float distance = UnitXP_distanceBetween(
+                reinterpret_cast<void*>(player),
+                reinterpret_cast<void*>(i),
+                METER_RANGED);
+
+            if (distance >= 0.0f
+                && distance <= distanceLimit
+                && distance > farthestDistance
+                && inViewingFrustum(vanilla1121_unitPosition(i), targetingRangeCone)
+                && UnitXP_inSight(reinterpret_cast<void*>(player), reinterpret_cast<void*>(i)) == 1) {
+                uint64_t guid = vanilla1121_unitGUID(i);
+                if (guid != 0) {
+                    farthestGUID = guid;
+                    farthestDistance = distance;
+                }
+            }
+        }
+
+        i = *reinterpret_cast<uint32_t*>(
+            *reinterpret_cast<int32_t*>(objects + 0xa4) + i + 4);
+    }
+
+    if (farthestGUID == 0) {
+        return false;
+    }
+
+    if (vanilla1121_unitTargetGUID(player) != farthestGUID) {
+        vanilla1121_target(farthestGUID);
+    }
+    return true;
+}
+
 
 bool targetNearestEnemy(float distanceLimit) {
     vector<struct mob_entity> mobs{};
